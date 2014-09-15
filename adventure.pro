@@ -1,9 +1,5 @@
 %% Nani Search - Adventure
 
-%% Deleting thingies in case of repeated loading
-%% Not sure of how idiomatic is this...
-%% Or how reliably it works... (5.x vs 7.x)
-
 %% Rooms
 room(kitchen).
 room(office).
@@ -20,7 +16,7 @@ contents(kitchen, [apple, broccoli, crackers, table]).
 contents(cellar, ['washing machine']).
 contents('washing machine', [nani]).
 
-%% make the crackers a container (?)
+%% makes the table a container
 contents(table, []).
 
 
