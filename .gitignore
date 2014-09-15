@@ -1,0 +1,119 @@
+male(josep).
+male(aleix).
+male(sergi).
+male(manolo).
+male(joaquim).
+male(jordi).
+male(pol).
+male(quim).
+
+female(montse).
+female(teresa).
+female(catalina).
+female(elena).
+female('maria teresa').
+female(belen).
+female(keiko).
+female(ariadna).
+female(meritxell).
+
+parent(joaquim, josep).
+parent(joaquim, 'maria teresa').
+parent(teresa, josep).
+parent(teresa, 'maria teresa').
+
+parent(manolo, elena).
+parent(manolo, montse).
+parent(catalina, elena).
+parent(catalina, montse).
+
+parent(josep, sergi).
+parent(josep, aleix).
+parent(montse, sergi).
+parent(montse, aleix).
+
+parent(sergi, keiko).
+parent(belen, keiko).
+
+parent(jordi, pol).
+parent('maria teresa', pol).
+
+parent(jordi, ariadna).
+parent('maria teresa', ariadna).
+
+parent(elena, meritxell).
+
+spouse(joaquim, teresa).
+spouse(manolo, catalina).
+
+spouse(josep, montse).
+spouse(quim, elena).
+
+spouse(sergi, belen).
+
+married(X, Y) :- spouse(X, Y).
+married(X, Y) :- spouse(Y, X).
+
+mother(M,C):-
+    parent(M,C),
+    female(M).
+
+father(F,C):-
+    parent(F,C),
+    male(F).
+
+
+son(S,P):-
+    parent(P,S),
+    male(S).
+
+daughter(D,P):-
+    parent(P,D),
+    female(D).
+
+
+siblings(X, Y) :-
+    X \= Y,
+    parent(P, X),
+    parent(P, Y).
+
+brother(B, O) :-
+    male(B),
+    siblings(B, O).
+
+sister(S, O) :-
+    female(S),
+    siblings(S, O).
+
+
+aunt(A, N) :-
+    parent(P, N),
+    sister(A, P).
+
+aunt(A, N) :-
+    married(A, U),
+    brother(U, P),
+    parent(P, N).
+
+uncle(U, N) :-
+    parent(P, N),
+    brother(U, P).
+
+uncle(U, N) :-
+    married(U, A),
+    sister(A, P),
+    parent(P, N).
+
+cousin(A, B) :-
+    parent(P, A),
+    parent(Q, B),
+    siblings(P, Q).
+
+grandparent(X, Y) :-
+    parent(X, M),
+    parent(M, Y).
+
+grandchildren(X, Y) :-
+    parent(M, X),
+    parent(Y, M).
+
