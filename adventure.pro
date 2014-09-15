@@ -54,7 +54,7 @@ is_closed(X, Y) :- \+ is_open(X, Y).
 %% Food
 tastes_yucky(broccoli).
 
-Edible(apple).
+edible(apple).
 edible(crackers).
 
 edible(X) :- tastes_yucky(X).
