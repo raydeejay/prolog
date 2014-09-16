@@ -93,7 +93,7 @@ eat_food(X) :-
     ansi_format([fg(green)], "Refreshing!", []), nl.
 
 
-%% Lights    
+%% Lights
 :- dynamic turned_off/1.
 :- dynamic turned_on/1.
 turned_off(flashlight).
@@ -117,7 +117,7 @@ here(kitchen).
 
 
 %% Listing
-list_things(Place) :-  
+list_things(Place) :-
     location(X, Place),
     tab(2),
     write(X),
@@ -155,7 +155,7 @@ look_in(Container) :-
 
 
 %% Movement
-goto(Place):-  
+goto(Place) :-
     can_go(Place),
     move(Place),
     look,
@@ -166,23 +166,23 @@ can_go(Place):-
     connect(X, Place),
     is_open(X, Place).
 
-can_go(Place):-
+can_go(Place) :-
     here(X),
     connect(X, Place),
     write("The door is closed."), nl,
     fail.
 
-can_go(_):-
+can_go(_) :-
     write("You can't get there from here."), nl,
     fail.
 
-move(Place):-
+move(Place) :-
     retract(here(_)),
     asserta(here(Place)).
 
 
 %% Inventory
-take(X):-  
+take(X) :-
     can_take(X),
     take_object(X),
     !.
@@ -194,7 +194,7 @@ can_take(Thing) :-
     format('There is no ~s here.', Thing), nl,
     fail.
 
-take_object(Object):-
+take_object(Object) :-
     contents(Place, X),
     member(Object, X),
     subtract(X, [Object], Result),
@@ -210,7 +210,7 @@ put(X, Y):-
     put_object(X, Y),
     !.
 
-put_object(Object, Container):-  
+put_object(Object, Container) :-
     have(Object),
     contents(Container, List),
     append(List, Object, NewList),
@@ -223,7 +223,7 @@ inventory :-
     write('You are carrying:'), nl,
     list_inventory.
 
-list_inventory :-  
+list_inventory :-
     have(X),
     tab(2),
     write(X),
