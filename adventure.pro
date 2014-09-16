@@ -1,11 +1,284 @@
 %% Nani Search - Adventure
 
 %% Game initialization
-:- initialization(init_game).
+main :- init_game.
 
 %% Here I would load the other prolog files, I guess
 init_game :-
-    load_test_files([]).
+    load_test_files([]),
+    init_dynamic_facts,     % predicates which are not compiled
+
+    write('NANI SEARCH - A Sample Adventure Game'), nl,
+    write('Copyright (C) Amzi! inc. 1990-2010'), nl,
+    write('No rights reserved, use it as you wish'), nl,
+    nl,
+    write('Hit any key to continue.'), get0(_),
+    write('Type "help" if you need more help on mechanics.'), nl,
+    write('Type "hint" if you want a big hint.'), nl,
+    write('Type "quit" if you give up.'), nl,
+    nl,
+    write('Enjoy the hunt.'), nl,
+    
+    look,                   % give a look before starting the game
+    command_loop.
+
+% command_loop - repeats until either the nani is found or the
+%     player types quit
+
+command_loop :-
+    repeat,
+    get_command(X),
+    do(X),
+    (nanifound; X == quit).
+
+% do - matches the input command with the predicate which carries out
+%     the command.  More general approaches which might work in the
+%     listener are not supported in the compiler.  This approach
+%     also gives tighter control over the allowable commands.
+
+%     The cuts prevent the forced failure at the end of "command_loop"
+%     from backtracking into the command predicates.
+
+do(goto(X)) :- goto(X), !.
+do(nshelp) :- nshelp, !.
+do(hint) :- hint, !.
+do(inventory) :- inventory, !.
+do(take(X)) :- take(X), !.
+do(drop(X)) :- drop(X), !.
+do(eat(X)) :- eat(X), !.
+do(look) :- look, !.
+do(turn_on(X)) :- turn_on(X), !.
+do(turn_off(X)) :- turn_off(X), !.
+do(look_in(X)) :- look_in(X), !.
+do(quit) : -quit, !.
+
+% These are the predicates which control exit from the game.  If
+% the player has taken the nani, then the call to "have(nani)" will
+% succeed and the command_loop will complete.  Otherwise it fails
+% and command_loop will repeat.
+
+nanifound :-
+    have(nani),        
+    write('Congratulations, you saved the Nani.'), nl,
+    write('Now you can rest secure.'), nl, nl.
+
+quit :-
+    write('Giving up?  It''s going to be a scary night'), nl,
+    write('and when you get the Nani it''s not going'), nl,
+    write('to smell right.'), nl, nl.
+
+% The help command
+
+nshelp :-
+    write('Use simple English sentences to enter commands.'), nl,
+    write('The commands can cause you to:'), nl,
+    nl,
+    write('   go to a room          (ex. go to the office)'), nl,
+    write('   look around           (ex. look)'), nl,
+    write('   look in something     (ex. look in the desk)'), nl,
+    write('   take something        (ex. take the apple)'), nl,
+    write('   drop something        (ex. drop the apple)'), nl,
+    write('   eat something         (ex. eat the apple)'), nl,
+    write('   turn something on     (ex. turn on the light)'), nl,
+    write('   inventory your things (ex. inventory)'), nl,
+    nl,
+    write('The examples are verbose, terser commands and synonyms'), nl,
+    write('are usually accepted.'), nl, nl,
+    write('Hit any key to continue.'), nl,
+    get0(_),
+    look.
+
+hint :-
+    write('You need to get to the cellar, and you can''t unless'), nl,
+    write('you get some light.  You can''t turn on the cellar'), nl,
+    write('light, but there is a flashlight in the desk in the'), nl,
+    write('office you might use.'), nl, nl,
+    look.
+
+
+% respond simplifies writing a mixture of literals and variables
+ 
+respond([]) :-
+  write('.'), nl, nl.
+respond([H|T]) :-
+  write(H),
+  respond(T).
+
+
+% Simple English command listener.  It does some semantic checking
+% and allows for various synonyms.  Within a restricted subset of
+% English, a command can be phrased many ways.  Also non grammatical
+% constructs are understood, for example just giving a room name
+% is interpreted as the command to goto that room.
+
+% Some interpretation is based on the situation.  Notice that when
+% the player says turn on the light it is ambiguous.  It could mean
+% the room light (which can't be turned on in the game) or the
+% flash light.  If the player has the flash light it is interpreted
+% as flash light, otherwise it is interpreted as room light.
+
+get_command(C) :-
+  readlist(L),        % reads a sentence and puts [it,in,list,form]
+  command(X, L, []),    % call the grammar for command
+  C =.. X, !.          % make the command list a structure
+get_command(_) :-
+  respond(['I don''t understand, try again or type help']),fail.
+
+% The grammar doesn't have to be real English.  There are two
+% types of commands in Nani Search, those with and without a 
+% single argument.  A special case is also made for the command
+% goto which can be activated by simply giving a room name.
+
+command([Pred, Arg]) --> verb(Type, Pred), nounphrase(Type, Arg).
+command([Pred]) --> verb(intran, Pred).
+command([goto, Arg]) --> noun(go_place, Arg).
+
+% Recognize three types of verbs.  Each verb corresponds to a command,
+% but there are many synonyms allowed.  For example the command
+% turn_on will be triggered by either "turn on" or "switch on".
+
+verb(go_place, goto) --> go_verb.
+verb(thing, V) --> tran_verb(V).
+verb(intran, V) --> intran_verb(V).
+
+go_verb --> [go].
+go_verb --> [go, to].
+go_verb --> [g].
+
+tran_verb(take) --> [take].
+tran_verb(take) --> [pick, up].
+tran_verb(drop) --> [drop].
+tran_verb(drop) --> [put].
+tran_verb(drop) --> [put, down].
+tran_verb(eat) --> [eat].
+tran_verb(turn_on) --> [turn, on].
+tran_verb(turn_on) --> [switch, on].
+tran_verb(turn_off) --> [turn, off].
+tran_verb(look_in) --> [look, in].
+tran_verb(look_in) --> [look].
+tran_verb(look_in) --> [open].
+
+intran_verb(inventory) --> [inventory].
+intran_verb(inventory) --> [i].
+intran_verb(look) --> [look].
+intran_verb(look) --> [look, around].
+intran_verb(look) --> [l].
+intran_verb(quit) --> [quit].
+intran_verb(quit) --> [exit].
+intran_verb(quit) --> [end].
+intran_verb(quit) --> [bye].
+intran_verb(nshelp) --> [help].
+intran_verb(hint) --> [hint].
+
+% a noun phrase is just a noun with an optional determiner in front.
+
+nounphrase(Type,Noun) --> det, noun(Type, Noun).
+nounphrase(Type,Noun) --> noun(Type, Noun).
+
+det --> [the].
+det --> [a].
+
+% Nouns are defined as rooms, or things located somewhere.  We define
+% special cases for those things represented in Nani Search by two
+% words.  We can't expect the user to type the name in quotes.
+
+noun(go_place,R) --> [R], {room(R)}.
+noun(go_place,'dining room') --> [dining, room].
+
+noun(thing, T) --> [T], {location(T, _)}.
+noun(thing, T) --> [T], {have(T)}.
+noun(thing, flashlight) --> [flash, light].
+noun(thing, 'washing machine') --> [washing, machine].
+noun(thing, 'dirty clothes') --> [dirty, clothes].
+
+% If the player has just typed light, it can be interpreted three ways.
+% If a room name is before it, it must be a room light.  If the
+% player has the flash light, assume it means the flash light.  Otherwise
+% assume it is the room light.
+
+noun(thing, light) --> [X, light], {room(X)}.
+noun(thing, flashlight) --> [light], {have(flashlight)}.
+noun(thing, light) --> [light].
+
+% readlist - read a list of words, based on a Clocksin & Mellish
+% example.
+
+readlist(L) :-
+  write('> '),
+  read_word_list(L).
+
+read_word_list([W|Ws]) :-
+  get0(C),
+  readword(C, W, C1),       % Read word starting with C, C1 is first new
+  restsent(C1, Ws), !.      % character - use it to get rest of sentence
+
+restsent(C,[]) :- lastword(C), !. % Nothing left if hit last-word marker
+restsent(C,[W1|Ws]) :-
+  readword(C, W1, C1),        % Else read next word and rest of sentence
+  restsent(C1, Ws).
+
+readword(C, W, C1) :-         % Some words are single characters
+  single_char(C),           % i.e. punctuation
+  !, 
+  name(W, [C]),             % get as an atom
+  get0(C1).
+readword(C, W, C1) :-
+  is_num(C),                % if we have a number --
+  !,
+  number_word(C, W, C1, _). % convert it to a genuine number
+readword(C, W, C2) :-         % otherwise if character does not
+  in_word(C, NewC),         % delineate end of word - keep
+  get0(C1),                 % accumulating them until 
+  restword(C1, Cs, C2),       % we have all the word     
+  name(W, [NewC|Cs]).       % then make it an atom
+readword(C, W, C2) :-         % otherwise
+  get0(C1),       
+  readword(C1, W, C2).        % start a new word
+
+restword(C, [NewC|Cs], C2) :-
+  in_word(C, NewC),
+  get0(C1),
+  restword(C1, Cs, C2).
+restword(C, [], C).
+
+
+single_char(0',).
+single_char(0';).
+single_char(0':).
+single_char(0'?).
+single_char(0'!).
+single_char(0'.).
+
+
+in_word(C, C) :- C >= 0'a, C =< 0'z.
+in_word(C, L) :- C >= 0'A, C =< 0'Z, L is C + 32.
+in_word(0'', 0'').
+in_word(0'-, 0'-).
+
+% Have character C (known integer) - keep reading integers and build
+% up the number until we hit a non-integer. Return this in C1,
+% and return the computed number in W.
+
+number_word(C, W, C1, Pow10) :- 
+  is_num(C),
+  !,
+  get0(C2),
+  number_word(C2, W1, C1, P10),
+  Pow10 is P10 * 10,
+  W is integer(((C - 0'0) * Pow10) + W1).
+number_word(C, 0, C, 0.1).
+
+
+is_num(C) :-
+  C =< 0'9,
+  C >= 0'0.
+
+% These symbols delineate end of sentence
+
+lastword(10).   % end if new line entered
+lastword(0'.).
+lastword(0'!).
+lastword(0'?).
 
 
 %% Rooms
@@ -14,21 +287,6 @@ room(office).
 room(hall).
 room('dining room').
 room(cellar).
-
-
-%% Contents
-:- dynamic contains/2.
-contains(office, desk).
-contains(office, computer).
-contains(desk, flashlight).
-contains(desk, box).
-contains(box, ticket).
-contains(kitchen, apple).
-contains(kitchen, broccoli).
-contains(kitchen, crackers).
-contains(kitchen, table).
-contains(cellar, 'washing machine').
-contains('washing machine', nani).
 
 
 %% an object is at a location if it is directly there
@@ -80,6 +338,35 @@ is_closed(X,Y) :- door(Y,X,closed).
 is_open(X, Y) :- \+ is_closed(X, Y).
 
 
+% These facts are all subject to change during the game, so rather
+% than being compiled, they are "asserted" to the listener at
+% run time.  This predicate is called when "nanisrch" starts up.
+
+:- dynamic contains/2.
+:- dynamic turned_off/1.
+:- dynamic turned_on/1.
+
+init_dynamic_facts :-
+    assertz(contains(office, desk)),
+    assertz(contains(office, computer)),
+    assertz(contains(desk, flashlight)),
+    assertz(contains(desk, box)),
+    assertz(contains(box, ticket)),
+    assertz(contains(kitchen, apple)),
+    assertz(contains(kitchen, broccoli)),
+    assertz(contains(kitchen, crackers)),
+    assertz(contains(kitchen, table)),
+    assertz(contains(cellar, 'washing machine')),
+    assertz(contains('washing machine', nani)),
+    assertz(turned_off(flashlight)).
+
+
+%% Furniture
+furniture(desk).
+furniture('washing machine').
+furniture(table).
+
+
 %% Food
 tastes_yucky(broccoli).
 
@@ -115,9 +402,6 @@ eat_food(X) :-
 
 
 %% Lights
-:- dynamic turned_off/1.
-:- dynamic turned_on/1.
-turned_off(flashlight).
 
 turn_on(X) :-
     turned_off(X),
@@ -222,8 +506,7 @@ can_take(Thing) :-
     location(Thing, Place).
 
 take_object(Object) :-
-%    contains(Place, Object),
-    retract(contains(Place, Object)),
+    retract(contains(_, Object)),
     asserta(have(Object)),
     write("Taken."), nl.
 
