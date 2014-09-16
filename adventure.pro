@@ -49,21 +49,36 @@ direction_pair(in, out).
 direction(X) :- direction_pair(X, _).
 direction(X) :- direction_pair(_, X).
 
-%% Doors / Exits
+
+%% New exit system
+:- dynamic link/2.
+:- dynamic one_way_link/2.
+link(hall, office).
+link(kitchen, office).
+link(hall, 'dining room').
+link(kitchen, cellar).
+link('dining room', kitchen).
+one_way_link(hall, library).
+
+% there is a regular link
+linked(X, Y) :- link(X, Y), !.
+% or we can deduce that there is a link because the reverse exists
+linked(X, Y) :- link(Y, X), !.
+% or it could also be a one way link
+linked(X, Y) :- one_way_link(X, Y), !.
+
+
+%% Doors
 :- dynamic door/3.
 door(office, hall, closed).
-door(kitchen, office, closed).
-door(hall, 'dining room', closed).
-door(kitchen, cellar, closed).
-door('dining room', kitchen, closed).
 
-connect(X,Y) :- door(X,Y,_).
-connect(X,Y) :- door(Y,X,_).
+is_closed(X,Y) :- door(X,Y,closed).
+is_closed(X,Y) :- door(Y,X,closed).
 
-is_open(X,Y) :- door(X,Y,open).
-is_open(X,Y) :- door(Y,X,open).
+% If a door cannot be proven to be closed, then it's open
+% Including the case where the door doesn't exist at all :)
+is_open(X, Y) :- \+ is_closed(X, Y).
 
-is_closed(X, Y) :- \+ is_open(X, Y).
 
 %% Food
 tastes_yucky(broccoli).
@@ -132,7 +147,7 @@ list_things(Place) :-
 list_things(_).
 
 list_connections(Place) :-
-    connect(Place, X),
+    linked(Place, X),
     tab(2),
     write(X),
     nl,
@@ -167,16 +182,22 @@ goto(Place) :-
     look,
     !.
 
-can_go(Place):-
+can_go(Place) :-
     here(X),
-    connect(X, Place),
+    X \= Place,
+    linked(X, Place),
     is_open(X, Place).
 
 can_go(Place) :-
+    here(Place),
+    format("You are already in the ~s.", Place), nl,
+    !, fail.
+
+can_go(Place) :-
     here(X),
-    connect(X, Place),
+    is_closed(X, Place),
     write("The door is closed."), nl,
-    fail.
+    !, fail.
 
 can_go(_) :-
     write("You can't get there from here."), nl,
@@ -242,24 +263,26 @@ open_door(X) :-
     here(L),
     door(X, L, closed),
     retract(door(X, L, closed)),
-    asserta(door(X, L, open)).
+    asserta(door(X, L, open)),
+    !.
 
 open_door(X) :-
     here(L),
     door(L, X, closed),
     retract(door(L, X, closed)),
-    asserta(door(L, X, open)).
+    asserta(door(L, X, open)),
+    !.
 
 close_door(X) :-
     here(L),
     door(X, L, open),
     retract(door(X, L, open)),
-    asserta(door(X, L, closed)).
+    asserta(door(X, L, closed)),
+    !.
 
 close_door(X) :-
     here(L),
     door(L, X, open),
     retract(door(L, X, open)),
-    asserta(door(L, X, closed)).
-
-
+    asserta(door(L, X, closed)),
+    !.
