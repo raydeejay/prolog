@@ -203,11 +203,11 @@ take_object(Object) :-
     asserta(have(Object)),
     write("Taken."), nl.
 
-put(X, Y):-  
-    have(X),
-    location(Y, L),
-    here(L),
-    put_object(X, Y),
+put(Object, Container) :-
+    have(Object),
+    location(Container, Location),
+    here(Location),
+    put_object(Object, Container),
     !.
 
 put_object(Object, Container) :-
