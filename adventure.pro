@@ -213,20 +213,17 @@ take(X) :-
     can_take(X),
     take_object(X),
     !.
+take(Thing) :-
+    format('There is no ~s here.', Thing), nl,
+    fail.
 
 can_take(Thing) :-
     here(Place),
     location(Thing, Place).
-can_take(Thing) :-
-    format('There is no ~s here.', Thing), nl,
-    fail.
 
 take_object(Object) :-
-    contents(Place, X),
-    member(Object, X),
-    subtract(X, [Object], Result),
-    retract(contents(Place, _)),
-    asserta(contents(Place, Result)),
+%    contains(Place, Object),
+    retract(contains(Place, Object)),
     asserta(have(Object)),
     write("Taken."), nl.
 
@@ -238,17 +235,19 @@ put(Object, Container) :-
     !.
 
 put_object(Object, Container) :-
-    have(Object),
-    contents(Container, List),
-    append(List, Object, NewList),
-    retract(contents(Container, _)),
-    asserta(contents(Container, NewList)),
     retract(have(Object)),
+    asserta(contains(Container, Object)),
     format('You put ~s into ~s.', [Object, Container]), nl.
 
+% Inventory
+
 inventory :-
+    have(_),
     write('You are carrying:'), nl,
-    list_inventory.
+    list_inventory,
+    !.
+inventory :-
+    write("You have nothing."), nl.
 
 list_inventory :-
     have(X),
@@ -256,6 +255,7 @@ list_inventory :-
     write(X),
     nl,
     fail.
+list_inventory.
 
 
 %% Door management
