@@ -17,22 +17,28 @@ room(cellar).
 
 
 %% Contents
-:- dynamic contents/2.
-contents(office, [desk, computer]).
-contents(desk, [flashlight]).
-contents(kitchen, [apple, broccoli, crackers, table]).
-contents(cellar, ['washing machine']).
-contents('washing machine', [nani]).
+:- dynamic contains/2.
+contains(office, desk).
+contains(office, computer).
+contains(desk, flashlight).
+contains(desk, box).
+contains(box, ticket).
+contains(kitchen, apple).
+contains(kitchen, broccoli).
+contains(kitchen, crackers).
+contains(kitchen, table).
+contains(cellar, 'washing machine').
+contains('washing machine', nani).
 
-%% makes the table a container
-contents(table, []).
 
-
-%% an object is at a location if it is amongst its contents
-%% TODO: nested objects
+%% an object is at a location if it is directly there
+%% or in one of the objects contained in it, recursively
 location(Object, Place) :-
-    contents(Place, X),
-    member(Object, X).
+    contains(Place, Object).
+location(Object, Outer) :-
+    contains(Outer, Place),
+    location(Object, Place).
+
 
 %% Directions and their reverses
 direction_pair(n, s).
