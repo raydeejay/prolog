@@ -1,5 +1,13 @@
 %% Nani Search - Adventure
 
+%% Game initialization
+:- initialization(init_game).
+
+%% Here I would load the other prolog files, I guess
+init_game :-
+    load_test_files([]).
+
+
 %% Rooms
 room(kitchen).
 room(office).
