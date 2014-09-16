@@ -117,3 +117,4 @@ grandchildren(X, Y) :-
     parent(M, X),
     parent(Y, M).
 
+/gene.pro
